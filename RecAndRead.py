@@ -1,16 +1,14 @@
 import pyttsx3
 import speech_recognition as sr
+import os
 
 class RecAndRead:
     def __init__(self):
         self.engine = pyttsx3.init()
         self.rate = self.engine.getProperty("rate")
         self.voices = [x for x in self.engine.getProperty("voices")]
-        self.recon = sr.Recognizer()
-        self.mic = sr.Microphone(device_index=7)
-        self.response = { "success": True,
-                            "error": None,
-                            "transcription": None}
+
+
 
     def ratePick(self, adjust = -10):
         self.engine.setProperty("rate", self.rate + adjust)
@@ -19,26 +17,15 @@ class RecAndRead:
         v = self.voices[voiceNum]
         self.engine.setProperty("voice", v.id)
 
+
     def micPick(self):
-        micList = [x for x in sr.Microphone.list_microphone_names]
+
+        micList = [x for x in sr.Microphone.list_microphone_names()]
         for x in enumerate(micList):
             print(x)
-        select = input("Chosen mic number: ")
-        self.mic(device_index=int(select))
 
-    def listenTo(self):
-        with self.mic as source:
-            self.recon.adjust_for_ambient_noise(source)
-            audio = self.recon.listen(source, timeout=3)
-        try:
-            self.response["transcription"] = self.recon.recognize_google(audio, language="pt-BR")
-        except sr.RequestError:
-            self.response["success"] = False
-            self.response["error"] = "API unavailable"
-        except sr.UnknownValueError:
-            # speech was unintelligible
-            self.response["error"] = "Unable to recognize speech"
-        return self.response
+        select = input("Chosen mic number: ")
+        return int(select)
 
     def saySomething(self, line):
         self.ratePick()
@@ -46,8 +33,36 @@ class RecAndRead:
         self.engine.say(line)
         self.engine.runAndWait()
 
+    def listenTo(self):
+        microphone = sr.Microphone(device_index=self.micPick())
+        recognizer = sr.Recognizer()
+
+        response = {"success": True,
+                    "error": None,
+                    "transcription": None}
+
+        if not isinstance(recognizer, sr.Recognizer):
+            raise TypeError("`recognizer` must be `Recognizer` instance")
+
+        if not isinstance(microphone, sr.Microphone):
+            raise TypeError("`microphone` must be `Microphone` instance")
+
+        with microphone as source:
+            recognizer.adjust_for_ambient_noise(source)
+            audio = recognizer.listen(source)
+
+        try:
+            response["transcription"] = recognizer.recognize_google(audio_data=audio, language="pt-BR")
+        except sr.RequestError:
+            response["success"] = False
+            response["error"] = "API unavailable"
+        except sr.UnknownValueError:
+            # speech was unintelligible
+            response["error"] = "Unable to recognize speech"
+        return response
+
+
+if __name__ == "__main__":
 
 
 
-
-vs = RecAndRead().listenTo()
