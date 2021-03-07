@@ -32,7 +32,7 @@ class RecAndRead:
         self.voicePick()
         self.engine.say(line)
         self.engine.runAndWait()
-
+        self.engine.save_to_file()
     def listenTo(self):
         microphone = sr.Microphone(device_index=self.micPick())
         recognizer = sr.Recognizer()
