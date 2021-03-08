@@ -1,40 +1,39 @@
 import pyttsx3
 import speech_recognition as sr
-import os
+
 
 class RecAndRead:
     def __init__(self):
         self.engine = pyttsx3.init()
         self.rate = self.engine.getProperty("rate")
         self.voices = [x for x in self.engine.getProperty("voices")]
+        self.defaultIndex = 1
 
 
 
-    def ratePick(self, adjust = -10):
+    def ratePick(self, adjust = + 10):
         self.engine.setProperty("rate", self.rate + adjust)
 
     def voicePick(self, voiceNum=0):
         v = self.voices[voiceNum]
         self.engine.setProperty("voice", v.id)
 
-
     def micPick(self):
-
         micList = [x for x in sr.Microphone.list_microphone_names()]
         for x in enumerate(micList):
             print(x)
 
-        select = input("Chosen mic number: ")
-        return int(select)
+        self.defaultIndex = int(input("Chosen mic number: "))
+
 
     def saySomething(self, line):
         self.ratePick()
         self.voicePick()
         self.engine.say(line)
         self.engine.runAndWait()
-        self.engine.save_to_file()
+
     def listenTo(self):
-        microphone = sr.Microphone(device_index=self.micPick())
+        microphone = sr.Microphone(device_index=self.defaultIndex)
         recognizer = sr.Recognizer()
 
         response = {"success": True,
@@ -49,7 +48,7 @@ class RecAndRead:
 
         with microphone as source:
             recognizer.adjust_for_ambient_noise(source)
-            audio = recognizer.listen(source)
+            audio = recognizer.listen(source=source, timeout=4)
 
         try:
             response["transcription"] = recognizer.recognize_google(audio_data=audio, language="pt-BR")
@@ -59,10 +58,9 @@ class RecAndRead:
         except sr.UnknownValueError:
             # speech was unintelligible
             response["error"] = "Unable to recognize speech"
-        return response
+        return response["transcription"]
 
-
-if __name__ == "__main__":
-
-
-
+    def askAndListen(self, ask_line):
+        ask = self.saySomething(ask_line)
+        listen = self.listenTo()
+        return listen
